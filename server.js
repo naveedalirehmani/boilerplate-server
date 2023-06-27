@@ -5,10 +5,8 @@ const express = require("express");
 const helmet = require("helmet");
 require("dotenv").config();
 const passport = require("passport");
-const cookieSession = require('cookie-session')
+const cookieSession = require("cookie-session");
 const { Strategy } = require("passport-google-oauth20");
-
-const app = express();
 
 const config = {
   CLIENT_ID: process.env.CLIENT_ID,
@@ -17,34 +15,51 @@ const config = {
   COOKIE_KEY_2: process.env.COOKIE_KEY_2,
 };
 
-const authOptions = {
-  callbackURL: "/auth/google/callback", 
-  clientID: config.CLIENT_ID,
-  clientSecret: config.CLIENT_SECRECT,
-};
+passport.serializeUser((user, done) => {
+  console.log("serializeUser", user);
+  done(null, user);
+});
+
+passport.deserializeUser((user, done) => {
+  console.log("deserializeUser", user);
+  done(null, user);
+});
 
 //3.
 //* this will run after authorization token is verified, profile is user data and accesstoken is athorization token
-function verifyCallback(accessToken, refreshToken, profile, done) {
-  console.log("google profile", profile);
-  done(null, profile);
-}
+passport.use(
+  new Strategy(
+    {
+      callbackURL: "/auth/google/callback",
+      clientID: config.CLIENT_ID,
+      clientSecret: config.CLIENT_SECRECT,
+    },
+    (accessToken, refreshToken, profile, done) => 
+    {
+      console.log("google profile", profile); // this is the object that is being serialized and deserialized in the cookie.
+      done(null, profile);
+    }
+  )
+);
 
-passport.use(new Strategy(authOptions, verifyCallback));
-
-app.use(helmet());
-app.use(cookieSession({
-  name:'cookie-session-1',
-  maxAge: 24*60*60*1000,
-  keys: [ config.COOKIE_KEY_2, config.COOKIE_KEY_1]
-}))
-app.use(passport.initialize());
-
+const app = express();
 app.use(express.json());
 app.use("/files", express.static(path.join(__dirname, "files")));
+app.use(helmet());
 
-function checkLoggedIn(request, repsonse, next) {
-  const isLoggedIn = true;
+app.use(
+  cookieSession({
+    name: "cookie-session-1",
+    maxAge: 24 * 60 * 60 * 1000,
+    keys: [config.COOKIE_KEY_2, config.COOKIE_KEY_1], //* here 2 keys are used to rotate the second key in to replace the first one.
+  })
+);
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+function checkLoggedIn(request, response, next) {
+  const isLoggedIn = request.isAthenticated() && request.user;
   if (!isLoggedIn) {
     return response.status(401).json({
       error: "you must log in",
@@ -64,38 +79,48 @@ app.get(
 
 // 2.
 //* onces the credentials are verified, google will send authentication code to this route /auth/google/callback which we have also speficied in console, so we cannot add random routes here. this route will receive the authentication token, after that 3 things will happen, we send authentication code + client secret to goole, it responeds back with authorization toke, we use this authorization token to get users data. all this is done by passport.js
+//4.
+//* step 4 is also here once the above callback is called where we get the accessToken, passport then redirects the user based on the authentication output if succcess it redirecrts to succes or failure
 app.get(
   "/auth/google/callback",
   passport.authenticate("google", {
     failureRedirect: "/failure",
     successRedirect: "/home",
-    session: false,
+    session: true,
   }),
   (request, response) => {
     console.log("google called us back");
   }
 );
 
-app.get("/failure", (request, repsosne) => [
+// routes for failure and success.
+app.get("/failure", (request, response) => [
   response.status(401).json({
     error: "failed to authenticate",
   }),
 ]);
 
-app.get("/auth/logout", (request, response) => {});
-
-app.get("/secret", checkLoggedIn, (request, response) => {
-  response.send("not so secret code is 32!");
-});
-
-app.get("/", (request, response) => {
-  response.sendFile(path.join(__dirname, "files", "index.html"));
-});
-
 app.get("/home", (request, response) => {
   response.sendFile(path.join(__dirname, "files", "home.html"));
 });
 
+// logout
+app.get("/auth/logout", (request, response) => {
+  request.logout()
+  return response.redirect('/')
+});
+
+// secret route
+app.get("/secret", checkLoggedIn, (request, response) => {
+  response.send("not so secret code is 32!");
+});
+
+// index.html
+app.get("/", (request, response) => {
+  response.sendFile(path.join(__dirname, "files", "index.html"));
+});
+
+// creating an https server with a local created cert.pem
 https
   .createServer(
     {
