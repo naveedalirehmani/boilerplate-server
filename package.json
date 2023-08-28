@@ -1,0 +1,8 @@
+{
+    "scripts": {
+        "google-dev": "npm run dev --prefix oAuthWithGoogleVanilla"
+    },
+    "dependencies": {
+        "mongodb": "^5.8.1"
+    }
+}
