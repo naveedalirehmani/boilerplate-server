@@ -5,25 +5,22 @@ import FacebookAuthController from "../../../controller/authentication/oauth/fac
 
 const oAuthRouter = Router();
 
-const googleAuthController = new GoogleAuthController();
-const facebookAuthController = new FacebookAuthController();
-
 // oAuth google
 oAuthRouter.get("/google", (request, response) =>
-  googleAuthController.redirectToGoogleAuth(request, response),
+  GoogleAuthController.redirectToGoogleAuth(request, response),
 );
 //callback
 oAuthRouter.get("/google/callback", (request, response) =>
-  googleAuthController.handleGoogleCallback(request, response),
+  GoogleAuthController.handleGoogleCallback(request, response),
 );
 
 // oAuth facebook
 oAuthRouter.get("/facebook", (request, response) =>
-  facebookAuthController.redirectToFacebookAuth(request, response),
+  FacebookAuthController.redirectToFacebookAuth(request, response),
 );
 //callback
 oAuthRouter.get("/facebook/callback", (request, response) =>
-  facebookAuthController.handleFacebookCallback(request, response),
+  FacebookAuthController.handleFacebookCallback(request, response),
 );
 
 export default oAuthRouter;

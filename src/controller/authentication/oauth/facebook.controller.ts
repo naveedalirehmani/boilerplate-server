@@ -9,19 +9,19 @@ import {
 import { UserType } from "@prisma/client";
 
 class FacebookAuthController {
-  private appId: string = process.env.FACEBOOK_APP_ID!;
-  private appSecret: string = process.env.FACEBOOK_APP_SECRET!;
-  private redirectUri: string = `${process.env.REDIRECT_URI}/facebook/callback`;
+  private static appId: string = process.env.FACEBOOK_APP_ID!;
+  private static appSecret: string = process.env.FACEBOOK_APP_SECRET!;
+  private static redirectUri: string = `${process.env.REDIRECT_URI}/facebook/callback`;
 
-  public async redirectToFacebookAuth(
+  public static async redirectToFacebookAuth(
     request: Request,
     response: Response,
   ): Promise<void> {
-    const authUrl = `https://www.facebook.com/v10.0/dialog/oauth?client_id=${this.appId}&redirect_uri=${this.redirectUri}&state={st=state123abc,ds=123456789}&scope=email`;
+    const authUrl = `https://www.facebook.com/v10.0/dialog/oauth?client_id=${FacebookAuthController.appId}&redirect_uri=${FacebookAuthController.redirectUri}&state={st=state123abc,ds=123456789}&scope=email`;
     response.redirect(authUrl);
   }
 
-  public async handleFacebookCallback(
+  public static async handleFacebookCallback(
     request: Request,
     response: Response,
   ): Promise<void> {
@@ -31,9 +31,9 @@ class FacebookAuthController {
         `https://graph.facebook.com/v10.0/oauth/access_token`,
         {
           params: {
-            client_id: this.appId,
-            redirect_uri: this.redirectUri,
-            client_secret: this.appSecret,
+            client_id: FacebookAuthController.appId,
+            redirect_uri: FacebookAuthController.redirectUri,
+            client_secret: FacebookAuthController.appSecret,
             code,
           },
         },

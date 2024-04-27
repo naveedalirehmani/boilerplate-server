@@ -10,19 +10,19 @@ import {
 import { UserType } from "@prisma/client";
 
 class GoogleAuthController {
-  private clientId: string = process.env.GOOGLE_CLIENT_ID!;
-  private clientSecret: string = process.env.GOOGLE_CLIENT_SECRET!;
-  private redirectUri: string = `${process.env.REDIRECT_URI}/google/callback`;
+  private static clientId: string = process.env.GOOGLE_CLIENT_ID!;
+  private static clientSecret: string = process.env.GOOGLE_CLIENT_SECRET!;
+  private static redirectUri: string = `${process.env.REDIRECT_URI}/google/callback`;
 
-  public async redirectToGoogleAuth(
+  public static async redirectToGoogleAuth(
     request: Request,
     response: Response,
   ): Promise<void> {
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${this.clientId}&redirect_uri=${this.redirectUri}&response_type=code&scope=email profile`;
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GoogleAuthController.clientId}&redirect_uri=${GoogleAuthController.redirectUri}&response_type=code&scope=email profile`;
     response.status(ResponseStatus.Redirect).redirect(authUrl);
   }
 
-  public async handleGoogleCallback(
+  public static async handleGoogleCallback(
     request: Request,
     response: Response,
   ): Promise<void> {
@@ -32,9 +32,9 @@ class GoogleAuthController {
         "https://oauth2.googleapis.com/token",
         {
           code: authorizationCode,
-          client_id: this.clientId,
-          client_secret: this.clientSecret,
-          redirect_uri: this.redirectUri,
+          client_id: GoogleAuthController.clientId,
+          client_secret: GoogleAuthController.clientSecret,
+          redirect_uri: GoogleAuthController.redirectUri,
           grant_type: "authorization_code",
         },
       );
