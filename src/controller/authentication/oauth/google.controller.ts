@@ -13,12 +13,17 @@ class GoogleAuthController {
   private static clientId: string = process.env.GOOGLE_CLIENT_ID!;
   private static clientSecret: string = process.env.GOOGLE_CLIENT_SECRET!;
   private static redirectUri: string = `${process.env.REDIRECT_URI}/google/callback`;
+  private static readonly AUTH_URL =
+    "https://accounts.google.com/o/oauth2/v2/auth";
+  private static readonly TOKEN_URL = "https://oauth2.googleapis.com/token";
+  private static readonly USER_INFO_URL =
+    "https://www.googleapis.com/oauth2/v2/userinfo";
 
   public static async redirectToGoogleAuth(
     request: Request,
     response: Response,
   ): Promise<void> {
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GoogleAuthController.clientId}&redirect_uri=${GoogleAuthController.redirectUri}&response_type=code&scope=email profile`;
+    const authUrl = `${GoogleAuthController.AUTH_URL}?client_id=${GoogleAuthController.clientId}&redirect_uri=${GoogleAuthController.redirectUri}&response_type=code&scope=email profile`;
     response.status(ResponseStatus.Redirect).redirect(authUrl);
   }
 
@@ -29,7 +34,7 @@ class GoogleAuthController {
     const authorizationCode = request.query.code as string;
     try {
       const authorizationToken = await axios.post(
-        "https://oauth2.googleapis.com/token",
+        GoogleAuthController.TOKEN_URL,
         {
           code: authorizationCode,
           client_id: GoogleAuthController.clientId,
@@ -40,7 +45,7 @@ class GoogleAuthController {
       );
 
       const userInfoResponse = await axios.get(
-        "https://www.googleapis.com/oauth2/v2/userinfo",
+        GoogleAuthController.USER_INFO_URL,
         {
           headers: {
             Authorization: `Bearer ${authorizationToken.data.access_token}`,
