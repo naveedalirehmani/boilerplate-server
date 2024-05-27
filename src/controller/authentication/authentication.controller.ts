@@ -20,6 +20,12 @@ import { setUserCookies } from "../../utils/auth.utils";
 import { UserRole } from "@prisma/client";
 
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
+const LOGOUT_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: IS_PRODUCTION,
+  sameSite: IS_PRODUCTION ? ("none" as const) : ("lax" as const),
+  ...(IS_PRODUCTION && { domain: process.env.COOKIE_CLIENT }),
+};
 
 export async function signupHandler(request: Request, response: Response) {
   try {
@@ -124,13 +130,6 @@ export async function adminLoginHandler(request: Request, response: Response) {
 
 export async function logoutHandler(request: Request, response: Response) {
   try {
-    const LOGOUT_COOKIE_OPTIONS = {
-      httpOnly: true,
-      secure: IS_PRODUCTION,
-      sameSite: IS_PRODUCTION ? ("none" as const) : ("lax" as const),
-      ...(IS_PRODUCTION && { domain: process.env.COOKIE_CLIENT }),
-    };
-
     // Clearing the accessToken and refreshToken cookies
     response.clearCookie("access_token_flower_box", LOGOUT_COOKIE_OPTIONS);
     response.clearCookie("refresh_token_flower_box", LOGOUT_COOKIE_OPTIONS);
